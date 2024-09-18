@@ -38,6 +38,11 @@ void Timer_Start()
     TIMER0_CTL_R |= 0x00000001;      // 10) enable timer0A
 }
 
+void Timer_Stop()
+{
+    Timer0A_Stop();
+}
+
 uint32_t Timer_TimeLeft(uint8_t *hours, uint8_t *minutes, uint8_t *seconds)
 {
     uint8_t h = seconds_left / 3600;
