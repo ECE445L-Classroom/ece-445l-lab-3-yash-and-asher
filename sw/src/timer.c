@@ -25,9 +25,9 @@ void counter_task()
     
     if(seconds == 59){
         if(minutes == 59){
-            minutes == 0;
+            minutes = 0;
             if(hours == 12){
-                 hours == 1;
+                hours = 1;
             }
             else hours += 1;  
         }
@@ -82,6 +82,22 @@ void Timer_GetTime(uint8_t *_hours, uint8_t *_minutes, uint8_t *_seconds)
     *_seconds = seconds;
 }
 
+void Timer_SnoozeAlarm()
+{
+    if(Timer_TriggerAlarm())
+    {
+        if(minutes_alarm + 10 > 59)
+        {
+            hours_alarm = (hours_alarm + 1) % 24;
+            minutes_alarm = (minutes_alarm + 10) % 60;
+        }
+        else
+        {
+            minutes_alarm = minutes_alarm + 10;
+        }
+    }
+}
+
 #define NVIC_EN0_INT19 0x00080000  // Interrupt 19 enable
 void Timer_Start()
 {
@@ -99,10 +115,4 @@ uint8_t Timer_TriggerAlarm()
     {
         return 0;
     }
-}
-
-void set_time(uint8_t h, uint8_t m, uint8_t s){
-    hours = h;
-    minutes = m;
-    seconds = s;
 }

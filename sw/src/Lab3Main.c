@@ -161,6 +161,11 @@ int main(void){
         {
           Speaker_Enable(0);
         }
+        else if(Switch_Down())
+        {
+          Speaker_Enable(0);
+          Timer_SnoozeAlarm();
+        }
         else{
           Speaker_Enable(1);
         }

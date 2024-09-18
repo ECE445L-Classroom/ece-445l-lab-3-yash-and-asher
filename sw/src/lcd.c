@@ -719,4 +719,5 @@ void mode_update(uint8_t hours, uint8_t minutes, uint8_t seconds) {
             ST7735_DrawString(1, 4, "EXIT", ST7735_YELLOW);
             ST7735_DrawString(0, prev_index, "*", ST7735_YELLOW);
         break;
+    }
 }

@@ -42,7 +42,7 @@ uint8_t debounce(uint32_t val)
         cnt--;
     }
     uint8_t new_curr_state = val;
-    return (!curr_state && new_curr_state);
+    return (curr_state && new_curr_state);
 }
 
 uint8_t Switch_Mode()
