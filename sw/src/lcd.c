@@ -4,7 +4,7 @@
 #include "../inc/PLL.h"
 #include "../inc/tm4c123gh6pm.h"
 #include "../inc/Timer0A.h"
-#include "../inc/Sine.c"
+//#include "../inc/Sine.c"
 //#include "Lab3.h"
 
 
@@ -423,7 +423,32 @@ Mode 4 = Set Time
 */
 //Middle X = 24 + 40 = 64
 //Middle Y =  130 - 40 = 90
-void init_lcd(uint8_t hour, uint8_t minute, uint8_t second, uint8_t mode, uint8_t index) {
+const short SineTable[256] = {
+  0,3,6,9,12,16,19,22,25,28,31,34,37,40,
+  43,46,49,51,54,57,60,63,65,68,71,73,76,78,
+  81,83,85,88,90,92,94,96,98,100,102,104,106,107,
+  109,111,112,113,115,116,117,118,120,121,122,122,123,124,
+  125,125,126,126,126,127,127,127,127,127,127,127,126,126,
+  126,125,125,124,123,122,122,121,120,118,117,116,115,113,
+  112,111,109,107,106,104,102,100,98,96,94,92,90,88,
+  85,83,81,78,76,73,71,68,65,63,60,57,54,51,
+  49,46,43,40,37,34,31,28,25,22,19,16,12,9,
+  6,3,0,-3,-6,-9,-12,-16,-19,-22,-25,-28,-31,-34,
+  -37,-40,-43,-46,-49,-51,-54,-57,-60,-63,-65,-68,-71,-73,
+  -76,-78,-81,-83,-85,-88,-90,-92,-94,-96,-98,-100,-102,-104,
+  -106,-107,-109,-111,-112,-113,-115,-116,-117,-118,-120,-121,-122,-122,
+  -123,-124,-125,-125,-126,-126,-126,-127,-127,-127,-127,-127,-127,-127,
+  -126,-126,-126,-125,-125,-124,-123,-122,-122,-121,-120,-118,-117,-116,
+  -115,-113,-112,-111,-109,-107,-106,-104,-102,-100,-98,-96,-94,-92,
+  -90,-88,-85,-83,-81,-78,-76,-73,-71,-68,-65,-63,-60,-57,
+  -54,-51,-49,-46,-43,-40,-37,-34,-31,-28,-25,-22,-19,-16,
+  -12,-9,-6,-3};
+
+int32_t Sin(uint32_t Ix) {
+    Ix = Ix % 256;  // Wrap around for angles greater than 360°
+    return SineTable[Ix];
+}
+void init_lcd(uint8_t hours, uint8_t minutes, uint8_t seconds, uint8_t mode, uint8_t index) {
     
     ST7735_InitR(INITR_REDTAB);
     ST7735_DrawBitmap(24, 130, clock,  80  ,  80);
@@ -433,22 +458,77 @@ void init_lcd(uint8_t hour, uint8_t minute, uint8_t second, uint8_t mode, uint8_
     int32_t minute_y ;
     int32_t second_x;
     int32_t second_y;
-    
+    int32_t hour_angle ;
+    int32_t minute_angle; 
+    int32_t second_angle;
+    char hour_str[10];
+    char min_str[12];
+    char sec_str[12];
+    char time_string[20];
+    uint8_t hour = (hours == 12) ? 0 : hours;
+    uint8_t second = seconds == 0 ? 60 : seconds;
+    uint8_t minute = minutes == 0 ? 60 : minutes;
     switch(mode) {
         case 0: 
-                 hour_x = Sin(64 -((255 * hour)/12)) * 20 + 64;
-                 hour_y = Sin(((255 * hour)/12)) * 20 + 90;
+         hour_angle = (hour * 255) / 12;
+         minute_angle = (minute * 255) / 60;
+         second_angle = (second * 255) / 60;
 
-                 minute_x = Sin(64 -((255 * hour)/12)) * 30 + 64;
-                 minute_y = Sin(((255 * hour)/12)) * 30 + 90;
+        // Calculate positions for hour hand
+        hour_y = -(Sin(64 - hour_angle) * 10) / 127 + 90;  // Adjusted for correct positioning
+        hour_x = (Sin(hour_angle) * 10) / 127 + 64;
 
-                 second_x = Sin(64 -((255 * hour)/12)) * 25 + 64;
-                 second_y = Sin(((255 * hour)/12)) * 25 + 90;
+        // Calculate positions for minute hand
+        minute_y = -(Sin(64 - minute_angle) * 15) / 127 + 90; // Adjusted for correct positioning
+        minute_x = (Sin(minute_angle) * 15) / 127 + 64;
+
+        // Calculate positions for second hand
+        second_y = -(Sin(64 - second_angle) * 20) / 127 + 90; // Adjusted for correct positioning
+        second_x = (Sin(second_angle) * 20) / 127 + 64;
 
                 ST7735_DrawBitmap(24, 130, clock,  80  ,  80);
                 ST7735_DrawLine(64, 90,hour_x, hour_y, ST7735_YELLOW);
                 ST7735_DrawLine(64, 90,minute_x, minute_y, ST7735_YELLOW);
                 ST7735_DrawLine(64, 90,second_x, second_y, ST7735_YELLOW);
+        break;
+        case 1: 
+            ST7735_InitR(INITR_REDTAB);
+            sprintf(time_string,"%02d:%02d:%02d", hours, minutes, seconds );
+            ST7735_DrawString(5, 5, time_string, ST7735_YELLOW);
+        break;
+        case 2:
+            ST7735_InitR(INITR_REDTAB);
+            ST7735_DrawString(1, 0, "SET TIME", ST7735_YELLOW);
+            ST7735_DrawString(1, 1, "SET ALARM", ST7735_YELLOW);
+            ST7735_DrawString(1, 2, "EXIT", ST7735_YELLOW);
+            ST7735_DrawString(0, index, "*", ST7735_YELLOW);
+
+        break;
+
+        case 3:
+            ST7735_InitR(INITR_REDTAB);
+            
+            sprintf(hour_str,"HOUR: %02d", hours);
+            sprintf(min_str,"MINUTE: %02d", minutes);
+            sprintf(sec_str,"SECOND: %02d", seconds);
+            ST7735_DrawString(1, 0, hour_str, ST7735_YELLOW);
+            ST7735_DrawString(1, 1, min_str, ST7735_YELLOW);
+            ST7735_DrawString(1, 2, sec_str, ST7735_YELLOW);
+            ST7735_DrawString(1, 3, "EXIT", ST7735_YELLOW);
+            ST7735_DrawString(0, index, "*", ST7735_YELLOW);
+        break;
+
+        case 4:
+            ST7735_InitR(INITR_REDTAB);
+            sprintf(hour_str,"HOUR: %02d", hours);
+            sprintf(min_str,"MINUTE: %02d", minutes);
+            sprintf(sec_str,"SECOND: %02d", seconds);
+            ST7735_DrawString(1, 0, hour_str, ST7735_YELLOW);
+            ST7735_DrawString(1, 1, min_str, ST7735_YELLOW);
+            ST7735_DrawString(1, 2, sec_str, ST7735_YELLOW);
+            ST7735_DrawString(1, 3, "SET", ST7735_YELLOW);
+            ST7735_DrawString(1, 4, "EXIT", ST7735_YELLOW);
+            ST7735_DrawString(0, index, "*", ST7735_YELLOW);
         break;
     };
 		

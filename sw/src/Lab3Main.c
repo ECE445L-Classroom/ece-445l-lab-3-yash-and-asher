@@ -112,7 +112,7 @@ int main(void){
   //Switch_Init();
   //Speaker_Init();
   EnableInterrupts();
-	init_lcd(9,41,0,0, 0);
+	init_lcd(2,0,30,0, 0);
 
   unsigned int current_mode = 0;
   unsigned int selector_ptr = 0;
