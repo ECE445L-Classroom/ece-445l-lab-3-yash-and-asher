@@ -36,7 +36,7 @@ void SysTick_Handler()
     PB1 ^= 0x02;
 }
 
-uint32_t Speaker_Enable(uint8_t on)
+void Speaker_Enable(uint8_t on)
 {
     uint8_t previously_on = NVIC_ST_CTRL_R == 0x07;
     /* Detect edge when enabling speaker (off -> on). */
@@ -47,11 +47,12 @@ uint32_t Speaker_Enable(uint8_t on)
         NVIC_ST_CURRENT_R = 0;		    // any write clears it
         NVIC_SYS_PRI3_R	= (NVIC_SYS_PRI3_R&0x00FFFFFF) | 0x40000000; //priority 2															
         NVIC_ST_CTRL_R	=	0x00000007;//	enable	with	core	clock	and	interrupts
-        EnableInterrupts();
     }
     /* If off, disable SysTick. */
     else if(!on)
     {
         NVIC_ST_CTRL_R = 0;
     }
+
+    /*If remaining on, do nothing. */
 }

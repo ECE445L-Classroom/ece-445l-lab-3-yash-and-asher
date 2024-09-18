@@ -33,29 +33,41 @@ typedef enum switch_type {
     DOWN
 } switch_t;
 
+uint8_t debounce(uint32_t val)
+{
+    uint8_t curr_state = val;
+    uint32_t cnt = 0xFFFFFFFF;
+    while(cnt > 0)
+    {
+        cnt--;
+    }
+    uint8_t new_curr_state = val;
+    return (!curr_state && new_curr_state);
+}
+
 uint8_t Switch_Mode()
 {
-    return (MODE_PE0 & 0x01);
+    return debounce(MODE_PE0 & 0x01);
 }
 
 uint8_t Switch_Left()
 {
-    return (LEFT_PE1 & 0x02);
+    return debounce(LEFT_PE1 & 0x02);
 }
 
 uint8_t Switch_Right()
 {
-    return (RIGHT_PE2 & 0x04);
+    return debounce(RIGHT_PE2 & 0x04);
 }
 
 uint8_t Switch_Up()
 {
-    return (UP_PE3 & 0x08);
+    return debounce(UP_PE3 & 0x08);
 }
 
 uint8_t Switch_Down()
 {
-    return (DOWN_PE4 & 0x10);
+    return debounce(DOWN_PE4 & 0x10);
 }
 
 uint8_t Switch_BitVector(switch_t sw)

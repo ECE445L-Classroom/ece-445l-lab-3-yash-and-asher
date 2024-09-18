@@ -7,12 +7,6 @@
 
 volatile uint32_t seconds_left;
 
-void Timer_Init()
-{
-    seconds_left = 0;
-    Timer0A_Init(&counter_task, 80000, 2);
-}
-
 void counter_task()
 {
     if(seconds_left != 0)
@@ -25,12 +19,19 @@ void counter_task()
     }  
 }
 
+void Timer_Init()
+{
+    seconds_left = 0;
+    Timer0A_Init(&counter_task, 80000, 2);
+}
+
 void Timer_Set(uint8_t hours, uint8_t minutes, uint8_t seconds)
 {
     Timer0A_Stop();
     seconds_left = hours * 3600 + minutes * 60 + seconds;
 }
 
+#define NVIC_EN0_INT19          0x00080000  // Interrupt 19 enable
 void Timer_Start()
 {
     NVIC_EN0_R = NVIC_EN0_INT19;     // 9) enable interrupt 19 in NVIC

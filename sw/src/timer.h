@@ -5,7 +5,7 @@ void Timer_Init(void);
 
 void Timer_Set(uint8_t, uint8_t, uint8_t);
 
-void Timer_Start(void):
+void Timer_Start(void);
 
 void Timer_Stop(void);
 

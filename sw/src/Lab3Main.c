@@ -37,10 +37,10 @@
 #include "../inc/PLL.h"
 #include "../inc/tm4c123gh6pm.h"
 #include "../inc/Timer0A.h"
-//#include "switch.h"
-//#include "timer.h"
-//#include "speaker.h"
-#include "lcd.c"
+#include "switch.h"
+#include "timer.h"
+#include "speaker.h"
+#include "lcd.h"
 
 #define NUM_CHILD_MENUS 4
 //#include "Lab3.h"
@@ -56,17 +56,22 @@ uint8_t main_menu_sm(unsigned int *selector_ptr)
   {
     case 0:
       /* Set Circle to Analog Clk*/
+			break;
     case 1:
       /* Set Circle to Digital Clk*/
+			break;
     case 2:
       /* Set Circle to Set Time. */
+			break;
     case 3:
       /* Set Circle to Set Alarm. */
+			break;
     default:
       /* Set Circle to Analog Clk. */
+			break;
   }
 
-  /*if(Switch_Mode())
+  if(Switch_Mode())
   {
     return *selector_ptr + 1;
   }
@@ -74,32 +79,32 @@ uint8_t main_menu_sm(unsigned int *selector_ptr)
   {
     *selector_ptr = (*selector_ptr + 1) % NUM_CHILD_MENUS;
   }
-  else if(Switch_Down())
+  else if(Switch_Up())
   {
     *selector_ptr = (*selector_ptr - 1) % NUM_CHILD_MENUS;
-  } */
+  }
   return 0;
 }
 
-uint8_t analog_clock_sm()
+uint8_t analog_clock_sm(uint8_t h, uint8_t m, uint8_t s)
 {
   /* Load Analog Clock Image. */
   return 1;
 }
 
-uint8_t digital_clock_sm()
+uint8_t digital_clock_sm(uint8_t h, uint8_t m, uint8_t s)
 {
   /* Load Digital Clock Image. */
   return 2;
 }
 
-uint8_t alarm_sm()
+uint8_t alarm_sm(uint8_t *alarm_mode)
 {
   /* Load Alarm Image. */
   return 3;
 }
 
-uint8_t time_sm()
+uint8_t time_sm(uint8_t *time_mode)
 {
   /* Load Time Image. */
   return 4;
@@ -108,34 +113,59 @@ uint8_t time_sm()
 int main(void){
   DisableInterrupts();
   PLL_Init(Bus80MHz);    // bus clock at 80 MHz
-  //Timer_Init();
-  //Switch_Init();
-  //Speaker_Init();
+  Timer_Init();
+  Switch_Init();
+  Speaker_Init();
   EnableInterrupts();
 	init_lcd(2,0,30,0, 0);
 
   unsigned int current_mode = 0;
   unsigned int selector_ptr = 0;
+	uint8_t alarm_mode = 0;
+  uint8_t time_mode = 0;
+
+  uint8_t curr_h = 0;
+  uint8_t curr_m = 0;
+  uint8_t curr_s = 0;
   while(1){
       // write this
+      uint32_t time_left = Timer_TimeLeft(&curr_h, &curr_m, &curr_s);
+
       switch(current_mode)
       {
         case 0:
           current_mode = main_menu_sm(&selector_ptr);
           break;
         case 1:
-          current_mode = time_sm();
+          current_mode = time_sm(&time_mode);
           break;
         case 2:
-          current_mode = alarm_sm();
+          current_mode = alarm_sm(&alarm_mode);
           break;
         case 3:
-          current_mode = digital_clock_sm();
+          current_mode = digital_clock_sm(curr_h, curr_m, curr_s);
           break;
         case 4:
-          current_mode = analog_clock_sm();
+          current_mode = analog_clock_sm(curr_h, curr_m, curr_s);
           break;
       }
+
+      if(time_left == 0 && alarm_mode)
+      {
+        if(Switch_Up())
+        {
+          Speaker_Enable(0);
+        }
+        else{
+          Speaker_Enable(1);
+        }
+      }
+      else
+      {
+        Speaker_Enable(0);
+      }
+			
+			
 
   }
 }
