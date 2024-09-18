@@ -56,18 +56,23 @@ uint8_t main_menu_sm(unsigned int *selector_ptr)
   {
     case 0:
       /* Set Circle to Analog Clk*/
+      init_lcd(9,41,15,0, 0);
 			break;
     case 1:
       /* Set Circle to Digital Clk*/
+      init_lcd(9,41,15,0, 1);
 			break;
     case 2:
       /* Set Circle to Set Time. */
+      init_lcd(9,41,15,0, 2);
 			break;
     case 3:
       /* Set Circle to Set Alarm. */
+      init_lcd(9,41,15,0, 3);
 			break;
     default:
       /* Set Circle to Analog Clk. */
+      init_lcd(9,41,15,0, 4);
 			break;
   }
 
@@ -104,32 +109,32 @@ uint8_t alarm_sm(uint8_t *alarm_mode)
   return 3;
 }
 
-uint8_t time_sm(uint8_t *time_mode)
+uint8_t time_sm()
 {
   /* Load Time Image. */
   return 4;
 }
-
+int prev_state;
 int main(void){
+  prev_state = 2;
   DisableInterrupts();
   PLL_Init(Bus80MHz);    // bus clock at 80 MHz
-  Timer_Init();
+  Timer_Init(9, 41, 15);
   Switch_Init();
   Speaker_Init();
   EnableInterrupts();
-	init_lcd(2,0,30,0, 0);
-
+	init_lcd(9,41,15,0, 2);
   unsigned int current_mode = 0;
   unsigned int selector_ptr = 0;
 	uint8_t alarm_mode = 0;
-  uint8_t time_mode = 0;
 
   uint8_t curr_h = 0;
   uint8_t curr_m = 0;
   uint8_t curr_s = 0;
+  int index = 0;
   while(1){
       // write this
-      uint32_t time_left = Timer_TimeLeft(&curr_h, &curr_m, &curr_s);
+      Timer_GetTime(&curr_h, &curr_m, &curr_s);
 
       switch(current_mode)
       {
@@ -137,7 +142,7 @@ int main(void){
           current_mode = main_menu_sm(&selector_ptr);
           break;
         case 1:
-          current_mode = time_sm(&time_mode);
+          current_mode = time_sm();
           break;
         case 2:
           current_mode = alarm_sm(&alarm_mode);
@@ -150,7 +155,7 @@ int main(void){
           break;
       }
 
-      if(time_left == 0 && alarm_mode)
+      if(Timer_TriggerAlarm() && alarm_mode)
       {
         if(Switch_Up())
         {
@@ -164,9 +169,6 @@ int main(void){
       {
         Speaker_Enable(0);
       }
-			
-			
-
   }
 }
 

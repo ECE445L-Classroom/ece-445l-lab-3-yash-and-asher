@@ -51,6 +51,7 @@ void Speaker_Enable(uint8_t on)
     /* If off, disable SysTick. */
     else if(!on)
     {
+        PB1 = 0x00;
         NVIC_ST_CTRL_R = 0;
     }
 

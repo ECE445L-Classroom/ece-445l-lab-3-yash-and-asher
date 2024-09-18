@@ -4,52 +4,105 @@
 #include "../inc/tm4c123gh6pm.h"
 #include "../inc/Timer0A.h"
 #include "timer.h"
+#include "lcd.h"
 
-volatile uint32_t seconds_left;
+volatile uint32_t seconds;
+volatile uint32_t minutes;
+volatile uint32_t hours;
+volatile uint32_t tenth_seconds;
+
+volatile uint32_t hours_alarm;
+volatile uint32_t minutes_alarm;
+volatile uint32_t seconds_alarm;
 
 void counter_task()
 {
-    if(seconds_left != 0)
+    tenth_seconds++;
+    if(tenth_seconds <= 10)
     {
-        seconds_left--;
+        return;
     }
-    else
-    {
-        Timer0A_Stop();
-    }  
+    
+    if(seconds == 59){
+        if(minutes == 59){
+            minutes == 0;
+            if(hours == 12){
+                 hours == 1;
+            }
+            else hours += 1;  
+        }
+        else minutes += 1 % 60;
+        seconds = 0;
+    } 
+    else seconds += 1;
+
+    clock_update(hours, minutes,  seconds);
+    tenth_seconds = 0;
+    
 }
 
-void Timer_Init()
+void Timer_Init(uint8_t h, uint8_t m, uint8_t s)
 {
-    seconds_left = 0;
-    Timer0A_Init(&counter_task, 80000, 2);
+    tenth_seconds = 0;
+    seconds = s;
+    minutes = m;
+    hours = h;
+    Timer0A_Init(&counter_task, 8000000, 2);
 }
 
-void Timer_Set(uint8_t hours, uint8_t minutes, uint8_t seconds)
+void Timer_SetAlarm(uint8_t _hours, uint8_t _minutes, uint8_t _seconds)
 {
     Timer0A_Stop();
-    seconds_left = hours * 3600 + minutes * 60 + seconds;
+    hours_alarm = _hours;
+    minutes_alarm = _minutes;
+    seconds_alarm = _seconds;
+    Timer_Start();
 }
 
-#define NVIC_EN0_INT19          0x00080000  // Interrupt 19 enable
+void Timer_GetAlarm(uint8_t *_hours, uint8_t *_minutes, uint8_t *_seconds)
+{
+    *_hours = hours_alarm;
+    *_minutes = minutes_alarm;
+    *_seconds = seconds_alarm;
+}
+
+void Timer_SetTime(uint8_t _hours, uint8_t _minutes, uint8_t _seconds)
+{
+    Timer0A_Stop();
+    hours = _hours;
+    minutes = _minutes;
+    seconds = _seconds;
+    Timer_Start();
+}
+
+void Timer_GetTime(uint8_t *_hours, uint8_t *_minutes, uint8_t *_seconds)
+{
+    *_hours = hours;
+    *_minutes = minutes;
+    *_seconds = seconds;
+}
+
+#define NVIC_EN0_INT19 0x00080000  // Interrupt 19 enable
 void Timer_Start()
 {
     NVIC_EN0_R = NVIC_EN0_INT19;     // 9) enable interrupt 19 in NVIC
     TIMER0_CTL_R |= 0x00000001;      // 10) enable timer0A
 }
 
-void Timer_Stop()
+uint8_t Timer_TriggerAlarm()
 {
-    Timer0A_Stop();
+    if((hours_alarm - hours) == 0 && (minutes_alarm - minutes) == 0 && (seconds_alarm - seconds) == 0)
+    {
+        return 1;
+    }   
+    else
+    {
+        return 0;
+    }
 }
 
-uint32_t Timer_TimeLeft(uint8_t *hours, uint8_t *minutes, uint8_t *seconds)
-{
-    uint8_t h = seconds_left / 3600;
-    uint8_t m = (seconds_left - h * 3600) / 60;
-    uint8_t s = seconds_left - h * 3600 - m * 60;
-    *hours = h;
-    *minutes = m;
-    *seconds = s;
-    return seconds_left;
+void set_time(uint8_t h, uint8_t m, uint8_t s){
+    hours = h;
+    minutes = m;
+    seconds = s;
 }

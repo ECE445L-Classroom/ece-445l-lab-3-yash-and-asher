@@ -7,7 +7,13 @@
 //#include "../inc/Sine.c"
 //#include "Lab3.h"
 
+uint8_t hour;
+uint8_t second;
+uint8_t minute;
 
+uint8_t h;
+uint8_t m;
+uint8_t s;
 
 const unsigned short clock[] = {
  0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
@@ -448,10 +454,17 @@ int32_t Sin(uint32_t Ix) {
     Ix = Ix % 256;  // Wrap around for angles greater than 360°
     return SineTable[Ix];
 }
+
+uint8_t prev_index;
+uint8_t prev_mode;
+
 void init_lcd(uint8_t hours, uint8_t minutes, uint8_t seconds, uint8_t mode, uint8_t index) {
+    prev_mode = mode;
+    prev_index = index;
+  h = hours;
+  m = minutes;
+  s = seconds;
     
-    ST7735_InitR(INITR_REDTAB);
-    ST7735_DrawBitmap(24, 130, clock,  80  ,  80);
 	int32_t hour_x;
     int32_t hour_y;
     int32_t minute_x; 
@@ -465,11 +478,13 @@ void init_lcd(uint8_t hours, uint8_t minutes, uint8_t seconds, uint8_t mode, uin
     char min_str[12];
     char sec_str[12];
     char time_string[20];
-    uint8_t hour = (hours == 12) ? 0 : hours;
-    uint8_t second = seconds == 0 ? 60 : seconds;
-    uint8_t minute = minutes == 0 ? 60 : minutes;
+    hour = (hours == 12) ? 0 : hours;
+    second = seconds == 0 ? 60 : seconds;
+    minute = minutes == 0 ? 60 : minutes;
     switch(mode) {
         case 0: 
+        ST7735_InitR(INITR_REDTAB);
+         ST7735_DrawBitmap(24, 130, clock,  80  ,  80);
          hour_angle = (hour * 255) / 12;
          minute_angle = (minute * 255) / 60;
          second_angle = (second * 255) / 60;
@@ -533,4 +548,175 @@ void init_lcd(uint8_t hours, uint8_t minutes, uint8_t seconds, uint8_t mode, uin
     };
 		
     //ST7735_DrawString(5, 5, "Hello World", 100);
+}
+
+void clock_update(uint8_t hours, uint8_t minutes, uint8_t seconds) {
+    //ST7735_InitR(INITR_REDTAB);
+    h = hours;
+    m = minutes;
+    s = seconds;
+	int32_t hour_x;
+    int32_t hour_y;
+    int32_t minute_x; 
+    int32_t minute_y ;
+    int32_t second_x;
+    int32_t second_y;
+    int32_t hour_angle ;
+    int32_t minute_angle; 
+    int32_t second_angle;
+    char hour_str[10];
+    char min_str[12];
+    char sec_str[12];
+    char time_string[20];
+    hour = (hours == 12) ? 0 : hours;
+    second = seconds == 0 ? 60 : seconds;
+    minute = minutes == 0 ? 60 : minutes;
+    switch(prev_mode) {
+        case 0: 
+         hour_angle = (hour * 255) / 12;
+         minute_angle = (minute * 255) / 60;
+         second_angle = (second * 255) / 60;
+
+        // Calculate positions for hour hand
+        hour_y = -(Sin(64 - hour_angle) * 10) / 127 + 90;  // Adjusted for correct positioning
+        hour_x = (Sin(hour_angle) * 10) / 127 + 64;
+
+        // Calculate positions for minute hand
+        minute_y = -(Sin(64 - minute_angle) * 15) / 127 + 90; // Adjusted for correct positioning
+        minute_x = (Sin(minute_angle) * 15) / 127 + 64;
+
+        // Calculate positions for second hand
+        second_y = -(Sin(64 - second_angle) * 20) / 127 + 90; // Adjusted for correct positioning
+        second_x = (Sin(second_angle) * 20) / 127 + 64;
+
+                ST7735_DrawBitmap(24, 130, clock,  80  ,  80);
+                ST7735_DrawLine(64, 90,hour_x, hour_y, ST7735_YELLOW);
+                ST7735_DrawLine(64, 90,minute_x, minute_y, ST7735_YELLOW);
+                ST7735_DrawLine(64, 90,second_x, second_y, ST7735_YELLOW);
+        break;
+        case 1: 
+            ST7735_InitR(INITR_REDTAB);
+            sprintf(time_string,"%02d:%02d:%02d", hours, minutes, seconds );
+            ST7735_DrawString(5, 5, time_string, ST7735_YELLOW);
+        break;
+        case 2:
+            ST7735_InitR(INITR_REDTAB);
+            ST7735_DrawString(1, 0, "SET TIME", ST7735_YELLOW);
+            ST7735_DrawString(1, 1, "SET ALARM", ST7735_YELLOW);
+            ST7735_DrawString(1, 2, "EXIT", ST7735_YELLOW);
+            ST7735_DrawString(0, prev_index, "*", ST7735_YELLOW);
+
+        break;
+
+        case 3:
+            ST7735_InitR(INITR_REDTAB);
+            
+            sprintf(hour_str,"HOUR: %02d", hours);
+            sprintf(min_str,"MINUTE: %02d", minutes);
+            sprintf(sec_str,"SECOND: %02d", seconds);
+            ST7735_DrawString(1, 0, hour_str, ST7735_YELLOW);
+            ST7735_DrawString(1, 1, min_str, ST7735_YELLOW);
+            ST7735_DrawString(1, 2, sec_str, ST7735_YELLOW);
+            ST7735_DrawString(1, 3, "EXIT", ST7735_YELLOW);
+            ST7735_DrawString(0, prev_index, "*", ST7735_YELLOW);
+        break;
+
+        case 4:
+            ST7735_InitR(INITR_REDTAB);
+            sprintf(hour_str,"HOUR: %02d", hours);
+            sprintf(min_str,"MINUTE: %02d", minutes);
+            sprintf(sec_str,"SECOND: %02d", seconds);
+            ST7735_DrawString(1, 0, hour_str, ST7735_YELLOW);
+            ST7735_DrawString(1, 1, min_str, ST7735_YELLOW);
+            ST7735_DrawString(1, 2, sec_str, ST7735_YELLOW);
+            ST7735_DrawString(1, 3, "SET", ST7735_YELLOW);
+            ST7735_DrawString(1, 4, "EXIT", ST7735_YELLOW);
+            ST7735_DrawString(0, prev_index, "*", ST7735_YELLOW);
+        break;
+    };
+		
+    //ST7735_DrawString(5, 5, "Hello World", 100);
+}
+
+void mode_update(uint8_t hours, uint8_t minutes, uint8_t seconds) {
+//ST7735_InitR(INITR_REDTAB);
+    
+	int32_t hour_x;
+    int32_t hour_y;
+    int32_t minute_x; 
+    int32_t minute_y ;
+    int32_t second_x;
+    int32_t second_y;
+    int32_t hour_angle ;
+    int32_t minute_angle; 
+    int32_t second_angle;
+    char hour_str[10];
+    char min_str[12];
+    char sec_str[12];
+    char time_string[20];
+    hour = (hours == 12) ? 0 : hours;
+    second = seconds == 0 ? 60 : seconds;
+    minute = minutes == 0 ? 60 : minutes;
+    switch(prev_mode) {
+        case 0: 
+         hour_angle = (hour * 255) / 12;
+         minute_angle = (minute * 255) / 60;
+         second_angle = (second * 255) / 60;
+
+        // Calculate positions for hour hand
+        hour_y = -(Sin(64 - hour_angle) * 10) / 127 + 90;  // Adjusted for correct positioning
+        hour_x = (Sin(hour_angle) * 10) / 127 + 64;
+
+        // Calculate positions for minute hand
+        minute_y = -(Sin(64 - minute_angle) * 15) / 127 + 90; // Adjusted for correct positioning
+        minute_x = (Sin(minute_angle) * 15) / 127 + 64;
+
+        // Calculate positions for second hand
+        second_y = -(Sin(64 - second_angle) * 20) / 127 + 90; // Adjusted for correct positioning
+        second_x = (Sin(second_angle) * 20) / 127 + 64;
+            
+                ST7735_DrawBitmap(24, 130, clock,  80  ,  80);
+                ST7735_DrawLine(64, 90,hour_x, hour_y, ST7735_YELLOW);
+                ST7735_DrawLine(64, 90,minute_x, minute_y, ST7735_YELLOW);
+                ST7735_DrawLine(64, 90,second_x, second_y, ST7735_YELLOW);
+        break;
+        case 1: 
+            ST7735_InitR(INITR_REDTAB);
+            sprintf(time_string,"%02d:%02d:%02d", hours, minutes, seconds );
+            ST7735_DrawString(5, 5, time_string, ST7735_YELLOW);
+        break;
+        case 2:
+            ST7735_InitR(INITR_REDTAB);
+            ST7735_DrawString(1, 0, "SET TIME", ST7735_YELLOW);
+            ST7735_DrawString(1, 1, "SET ALARM", ST7735_YELLOW);
+            ST7735_DrawString(1, 2, "EXIT", ST7735_YELLOW);
+            ST7735_DrawString(0, prev_index, "*", ST7735_YELLOW);
+
+        break;
+
+        case 3:
+            ST7735_InitR(INITR_REDTAB);
+            
+            sprintf(hour_str,"HOUR: %02d", hours);
+            sprintf(min_str,"MINUTE: %02d", minutes);
+            sprintf(sec_str,"SECOND: %02d", seconds);
+            ST7735_DrawString(1, 0, hour_str, ST7735_YELLOW);
+            ST7735_DrawString(1, 1, min_str, ST7735_YELLOW);
+            ST7735_DrawString(1, 2, sec_str, ST7735_YELLOW);
+            ST7735_DrawString(1, 3, "EXIT", ST7735_YELLOW);
+            ST7735_DrawString(0, prev_index, "*", ST7735_YELLOW);
+        break;
+
+        case 4:
+            ST7735_InitR(INITR_REDTAB);
+            sprintf(hour_str,"HOUR: %02d", hours);
+            sprintf(min_str,"MINUTE: %02d", minutes);
+            sprintf(sec_str,"SECOND: %02d", seconds);
+            ST7735_DrawString(1, 0, hour_str, ST7735_YELLOW);
+            ST7735_DrawString(1, 1, min_str, ST7735_YELLOW);
+            ST7735_DrawString(1, 2, sec_str, ST7735_YELLOW);
+            ST7735_DrawString(1, 3, "SET", ST7735_YELLOW);
+            ST7735_DrawString(1, 4, "EXIT", ST7735_YELLOW);
+            ST7735_DrawString(0, prev_index, "*", ST7735_YELLOW);
+        break;
 }
